@@ -57,5 +57,8 @@ coverage.xml
 # UV
 .uv/
 
-# Local configuration
+# Local configuration (contains real Proxmox credentials — never commit)
 config/config.json
+proxmox-config/config.json
+# but keep the checked-in template
+!proxmox-config/config.example.json
