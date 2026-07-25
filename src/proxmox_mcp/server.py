@@ -70,8 +70,16 @@ class ProxmoxMCPServer:
         self.storage_tools = StorageTools(self.proxmox)
         self.cluster_tools = ClusterTools(self.proxmox)
         
+        # Transport selection (env-driven so the default stdio behaviour,
+        # used when Claude launches the server as a subprocess, is unchanged).
+        #   PROXMOX_MCP_TRANSPORT: 'stdio' (default), 'sse', or 'streamable-http'
+        #   PROXMOX_MCP_HOST/PORT:  bind address for the network transports
+        self.transport = os.getenv("PROXMOX_MCP_TRANSPORT", "stdio").lower()
+        host = os.getenv("PROXMOX_MCP_HOST", "127.0.0.1")
+        port = int(os.getenv("PROXMOX_MCP_PORT", "8000"))
+
         # Initialize MCP server
-        self.mcp = FastMCP("ProxmoxMCP")
+        self.mcp = FastMCP("ProxmoxMCP", host=host, port=port)
         self._setup_tools()
 
     def _setup_tools(self) -> None:
@@ -180,9 +188,24 @@ class ProxmoxMCPServer:
         signal.signal(signal.SIGINT, signal_handler)
         signal.signal(signal.SIGTERM, signal_handler)
 
+        # Map transport name to the FastMCP coroutine that serves it.
+        transports = {
+            "stdio": self.mcp.run_stdio_async,
+            "sse": self.mcp.run_sse_async,
+            "streamable-http": self.mcp.run_streamable_http_async,
+            "http": self.mcp.run_streamable_http_async,  # convenience alias
+        }
+        run_transport = transports.get(self.transport)
+        if run_transport is None:
+            self.logger.error(
+                f"Unknown PROXMOX_MCP_TRANSPORT '{self.transport}'. "
+                f"Valid values: {', '.join(sorted(transports))}"
+            )
+            sys.exit(1)
+
         try:
-            self.logger.info("Starting MCP server...")
-            anyio.run(self.mcp.run_stdio_async)
+            self.logger.info(f"Starting MCP server (transport={self.transport})...")
+            anyio.run(run_transport)
         except Exception as e:
             self.logger.error(f"Server error: {e}")
             sys.exit(1)
