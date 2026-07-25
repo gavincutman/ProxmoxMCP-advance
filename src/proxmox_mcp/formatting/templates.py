@@ -182,7 +182,39 @@ class ProxmoxTemplates:
                 f"  • Memory: {ProxmoxFormatters.format_bytes(memory_used)} / "
                 f"{ProxmoxFormatters.format_bytes(memory_total)} ({memory_percent:.1f}%)"
             ])
-            
+
+        return "\n".join(result)
+
+    @staticmethod
+    def container_status(container: Dict[str, Any]) -> str:
+        """Template for detailed single-container status output.
+
+        Args:
+            container: Container status data dictionary
+
+        Returns:
+            Formatted container status string
+        """
+        memory = container.get("memory", {})
+        memory_used = memory.get("used", 0)
+        memory_total = memory.get("total", 0)
+        memory_percent = (memory_used / memory_total * 100) if memory_total > 0 else 0
+
+        result = [
+            f"{ProxmoxTheme.RESOURCES['container']} {container.get('name', 'N/A')} "
+            f"(ID: {container.get('vmid', 'N/A')})",
+            f"  • Status: {container.get('status', 'unknown').upper()}",
+            f"  • Node: {container.get('node', 'N/A')}",
+            f"  • Uptime: {ProxmoxFormatters.format_uptime(container.get('uptime', 0))}",
+            f"  • CPU Cores: {container.get('cpus', 'N/A')}",
+            f"  • Memory: {ProxmoxFormatters.format_bytes(memory_used)} / "
+            f"{ProxmoxFormatters.format_bytes(memory_total)} ({memory_percent:.1f}%)"
+        ]
+
+        # Surface an active lock (e.g. 'mounted', 'backup') if present
+        if container.get("lock"):
+            result.append(f"  • Lock: {container['lock']}")
+
         return "\n".join(result)
 
     @staticmethod

@@ -58,10 +58,31 @@ Example:
 {"success": true, "output": "Linux vm1 5.4.0", "exit_code": 0}"""
 
 # Container tool descriptions
-GET_CONTAINERS_DESC = """List all LXC containers across the cluster with their status and configuration.
+GET_CONTAINERS_DESC = """List all LXC containers across the cluster with their status and resource usage.
 
 Example:
-{"vmid": "200", "name": "nginx", "status": "running", "template": "ubuntu-20.04"}"""
+{"vmid": "200", "name": "nginx", "status": "running", "node": "pve1", "cpus": 2, "memory": {"used": 268435456, "total": 536870912}}"""
+
+GET_CONTAINER_STATUS_DESC = """Get detailed status for a specific LXC container, including uptime, CPU, memory, and any active lock.
+
+Parameters:
+node* - Host node name (e.g. 'pve1')
+vmid* - Container ID number (e.g. '200')
+
+Example:
+{"vmid": "200", "name": "nginx", "status": "running", "uptime": 123456, "cpus": 2, "memory": {"used": 268435456, "total": 536870912}}"""
+
+CHANGE_CONTAINER_STATE_DESC = """Change the state of an LXC container.
+
+Parameters:
+node* - Host node name (e.g. 'pve1')
+vmid* - Container ID number (e.g. '200')
+action* - Action to perform (one of: 'start', 'stop', 'shutdown', 'reboot', 'suspend', 'resume')
+
+Note: LXC containers do not support QEMU-VM actions such as 'reset', 'pause', or 'hibernate'.
+
+Example:
+{"success": true, "action": "start", "vmid": "200", "node": "pve1"}"""
 
 # Storage tool descriptions
 GET_STORAGE_DESC = """List storage pools across the cluster with their usage and configuration.

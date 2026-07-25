@@ -68,6 +68,8 @@ class ProxmoxTool:
             formatted = ProxmoxTemplates.storage_list(data)
         elif resource_type == "containers":
             formatted = ProxmoxTemplates.container_list(data)
+        elif resource_type == "container_status":
+            formatted = ProxmoxTemplates.container_status(data)
         elif resource_type == "cluster":
             formatted = ProxmoxTemplates.cluster_status(data)
         else:

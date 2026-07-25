@@ -30,6 +30,7 @@ from .core.logging import setup_logging
 from .core.proxmox import ProxmoxManager
 from .tools.node import NodeTools
 from .tools.vm import VMTools
+from .tools.container import ContainerTools
 from .tools.storage import StorageTools
 from .tools.cluster import ClusterTools
 from .tools.definitions import (
@@ -40,6 +41,8 @@ from .tools.definitions import (
     CHANGE_VM_STATE_DESC,
     CREATE_VM_DESC,
     GET_CONTAINERS_DESC,
+    GET_CONTAINER_STATUS_DESC,
+    CHANGE_CONTAINER_STATE_DESC,
     GET_STORAGE_DESC,
     GET_CLUSTER_STATUS_DESC
 )
@@ -63,6 +66,7 @@ class ProxmoxMCPServer:
         # Initialize tools
         self.node_tools = NodeTools(self.proxmox)
         self.vm_tools = VMTools(self.proxmox)
+        self.container_tools = ContainerTools(self.proxmox)
         self.storage_tools = StorageTools(self.proxmox)
         self.cluster_tools = ClusterTools(self.proxmox)
         
@@ -125,6 +129,26 @@ class ProxmoxMCPServer:
             storage: Annotated[str, Field(description="Storage pool to use (default: 'local-lvm')")] = "local-lvm"
         ):
             return self.vm_tools.create_vm(node, name, iso, cores, memory, storage)
+
+        # Container tools
+        @self.mcp.tool(description=GET_CONTAINERS_DESC)
+        def get_containers():
+            return self.container_tools.get_containers()
+
+        @self.mcp.tool(description=GET_CONTAINER_STATUS_DESC)
+        def get_container_status(
+            node: Annotated[str, Field(description="Host node name (e.g. 'pve1', 'proxmox-node2')")],
+            vmid: Annotated[str, Field(description="Container ID number (e.g. '200', '201')")]
+        ):
+            return self.container_tools.get_container_status(node, vmid)
+
+        @self.mcp.tool(description=CHANGE_CONTAINER_STATE_DESC)
+        def change_container_state(
+            node: Annotated[str, Field(description="Host node name (e.g. 'pve1', 'proxmox-node2')")],
+            vmid: Annotated[str, Field(description="Container ID number (e.g. '200', '201')")],
+            action: Annotated[str, Field(description="Action to perform (one of: 'start', 'stop', 'shutdown', 'reboot', 'suspend', 'resume')")]
+        ):
+            return self.container_tools.change_container_state(node, vmid, action)
 
         # Storage tools
         @self.mcp.tool(description=GET_STORAGE_DESC)
